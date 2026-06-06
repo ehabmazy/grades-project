@@ -29,11 +29,13 @@ self.addEventListener('activate', function(e) {
 
 // Fetch: serve from cache, fallback to network
 self.addEventListener('fetch', function(e) {
+  // تجاهل أي request مش http/https (مثل chrome-extension://)
+  if (!e.request.url.startsWith('http')) return;
+
   e.respondWith(
     caches.match(e.request).then(function(cached) {
       if (cached) return cached;
       return fetch(e.request).then(function(response) {
-        // Cache new successful responses
         if (response && response.status === 200 && response.type === 'basic') {
           var clone = response.clone();
           caches.open(CACHE_NAME).then(function(cache) {
@@ -42,7 +44,6 @@ self.addEventListener('fetch', function(e) {
         }
         return response;
       }).catch(function() {
-        // Offline fallback
         return caches.match('/grades-project/');
       });
     })
